@@ -1,0 +1,76 @@
+.TH LIGHTSWITCH 1 "January 2025" "Lightswitch v1.0" "User Commands"
+.SH NAME
+lightswitch \- A simple scripting language
+.SH SYNOPSIS
+.B lightswitch
+[\fI--interactive\fR] [\fI<script_file>\fR]
+.SH DESCRIPTION
+Lightswitch is a simple scripting language that supports common operations like string manipulation, mathematical operations, logical operations, and file I/O.
+.SH COMMANDS
+.TP
+.B concat
+Concatenate two strings.
+.TP
+.B length
+Get the length of a string.
+.TP
+.B substr
+Extract a substring from a string.
+.TP
+.B readfile
+Read content from a file.
+.TP
+.B writefile
+Write content to a file.
+.TP
+.B array
+Create an empty array.
+.TP
+.B arraylen
+Get the length of an array.
+.TP
+.B arrayget
+Get an element from an array.
+.TP
+.B arrayset
+Set an element in an array.
+.TP
+.B sqrt
+Calculate the square root of a number.
+.TP
+.B pow
+Raise a number to a power.
+.TP
+.B random
+Generate a random number between two values.
+.TP
+.B and
+Logical AND operation.
+.TP
+.B or
+Logical OR operation.
+.TP
+.B not
+Logical NOT operation.
+.TP
+.B exit
+Exit the program with a status code.
+.TP
+.B status
+Show the exit status of the last command.
+.TP
+.B help
+Show this help message.
+.SH EXAMPLES
+.TP
+.B "concat Hello World"
+Concatenates the strings "Hello" and "World".
+.TP
+.B "math 5 + 3 = result"
+Calculates the sum of 5 and 3, storing the result in "result".
+.TP
+.B "readfile myfile.txt"
+Reads the content of "myfile.txt".
+.SH SEE ALSO
+.BR lightswitch(1)
+
