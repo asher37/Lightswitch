@@ -1,187 +1,190 @@
 #!/bin/bash
-# Lightswitch Interpreter with interactive mode
 
-function help_command {
-    cat << EOF
-Lightswitch - A simple scripting language
+declare -A FUNCTIONS
 
-Usage:
-  --interactive    Start Lightswitch in interactive mode
-  <script_file>     Run a Lightswitch script
-
-Built-in Commands:
-  concat <str1> <str2>    Concatenate two strings
-  length <str>            Get the length of a string
-  substr <str> <start> <length>   Get a substring
-  readfile <file>         Read content of a file
-  writefile <file> <content>   Write content to a file
-  array <arr_name>        Create an empty array
-  arraylen <arr_name>     Get the length of an array
-  arrayget <arr_name> <index>   Get an element from the array
-  arrayset <arr_name> <index> <value>   Set an element in the array
-  sqrt <num>              Calculate the square root of a number
-  pow <base> <exp>        Raise a number to a power
-  random <min> <max>      Generate a random number between min and max
-  and <val1> <val2>       Logical AND operation (1 or 0)
-  or <val1> <val2>        Logical OR operation (1 or 0)
-  not <val>               Logical NOT operation (1 or 0)
-  exit <status>           Exit the program with a status code
-  status                 Show the exit status of the last command
-  help                   Show this help message
-
-Examples:
-  concat Hello World
-  length Hello
-  math 3 + 2 = sum
-  readfile myfile.txt
-
-EOF
+# Function for interactive mode
+function interactive_mode() {
+    echo "Welcome to Lightswitch Interactive Mode. Type 'exit' to quit."
+    while true; do
+        printf "lightswitch> "
+        read -r command
+        if [[ "$command" == "exit" ]]; then
+            echo "Exiting Lightswitch Interactive Mode."
+            break
+        fi
+        execute_lightswitch "$command"
+    done
 }
 
-
-
-# Function to execute commands
-execute_command() {
-    local line="$1"
-
-    # Ignore comments (lines starting with #)
-    [[ "$line" =~ ^# ]] && return
-
-    # Trim whitespace and convert to lowercase
-    line=$(echo "$line" | sed 's/^[ \t]*//;s/[ \t]*$//' | awk '{print tolower($0)}')
-
-    case "$line" in
-        concat*)
-            str1=$(echo "$line" | awk '{print $2}')
-            str2=$(echo "$line" | awk '{print $3}')
-            echo "$str1$str2"
+# Function to execute Lightswitch commands
+function execute_lightswitch() {
+    local command="$1"
+    case "$command" in
+        print\ *)
+            # Print command
+            echo "${command#* }"
             ;;
-        length*)
-            str=$(echo "$line" | awk '{print $2}')
-            echo "${#str}"
+        math\ *)
+            # Math command: e.g., math 5+3=result
+            local equation=$(echo "$command" | cut -d' ' -f2)
+            local lhs=$(echo "$equation" | cut -d'=' -f1)
+            local result_var=$(echo "$equation" | cut -d'=' -f2)
+            local result=$(echo "$lhs" | bc)
+            eval "$result_var=$result"
             ;;
-        substr*)
-            str=$(echo "$line" | awk '{print $2}')
-            start=$(echo "$line" | awk '{print $3}')
-            length=$(echo "$line" | awk '{print $4}')
-            echo "${str:$start:$length}"
+        for\ *)
+            # For loop: e.g., for i in 1 2 3; do ... endfor
+            local var=$(echo "$command" | awk '{print $2}')
+            local items=$(echo "$command" | cut -d' ' -f4-)
+            local loop_body=""
+            while IFS= read -r loop_line; do
+                if [[ "$loop_line" == "endfor" ]]; then
+                    break
+                fi
+                loop_body+="$loop_line"$'\n'
+            done
+            for item in $items; do
+                while IFS= read -r line; do
+                    eval "$(echo "$line" | sed "s/\$$var/$item/g")"
+                done <<< "$loop_body"
+            done
             ;;
-        readfile*)
-            file=$(echo "$line" | awk '{print $2}')
-            cat "$file"
-            ;;
-        writefile*)
-            file=$(echo "$line" | awk '{print $2}')
-            content=$(echo "$line" | awk '{print $3}')
-            echo "$content" > "$file"
-            ;;
-	help*)
-		help_command
-		;;
-        array*)
-            arr=$(echo "$line" | awk '{print $2}')
-            eval "$arr=()"
-            ;;
-        arraylen*)
-            arr=$(echo "$line" | awk '{print $2}')
-            eval "echo \${#$arr[@]}"
-            ;;
-        arrayget*)
-            arr=$(echo "$line" | awk '{print $2}')
-            index=$(echo "$line" | awk '{print $3}')
-            eval "echo \${$arr[$index]}"
-            ;;
-        arrayset*)
-            arr=$(echo "$line" | awk '{print $2}')
-            index=$(echo "$line" | awk '{print $3}')
-            value=$(echo "$line" | awk '{print $4}')
-            eval "$arr[$index]=$value"
-            ;;
-        sqrt*)
-            num=$(echo "$line" | awk '{print $2}')
-            echo "scale=2; sqrt($num)" | bc
-            ;;
-        pow*)
-            base=$(echo "$line" | awk '{print $2}')
-            exp=$(echo "$line" | awk '{print $3}')
-            echo "$((base**exp))"
-            ;;
-        random*)
-            min=$(echo "$line" | awk '{print $2}')
-            max=$(echo "$line" | awk '{print $3}')
-            echo $(( ( RANDOM % (max - min + 1) ) + min ))
-            ;;
-        and*)
-            val1=$(echo "$line" | awk '{print $2}')
-            val2=$(echo "$line" | awk '{print $3}')
-            if [ "$val1" -eq 1 ] && [ "$val2" -eq 1 ]; then
-                echo "1"
-            else
-                echo "0"
+        if\ *)
+            # If condition: e.g., if $var -eq 10; then ... endif
+            local condition="${command#if }"
+            condition="${condition% then}"
+            local if_body=""
+            while IFS= read -r if_line; do
+                if [[ "$if_line" == "endif" ]]; then
+                    break
+                fi
+                if_body+="$if_line"$'\n'
+            done
+            if eval "[[ $condition ]]"; then
+                while IFS= read -r line; do
+                    eval "$line"
+                done <<< "$if_body"
             fi
             ;;
-        or*)
-            val1=$(echo "$line" | awk '{print $2}')
-            val2=$(echo "$line" | awk '{print $3}')
-            if [ "$val1" -eq 1 ] || [ "$val2" -eq 1 ]; then
-                echo "1"
-            else
-                echo "0"
-            fi
+        case\ *)
+            # Case statement: e.g., case $var in ... esac
+            local var=$(echo "$command" | awk '{print $2}')
+            local case_body=""
+            while IFS= read -r case_line; do
+                if [[ "$case_line" == "esac" ]]; then
+                    break
+                fi
+                case_body+="$case_line"$'\n'
+            done
+            while IFS= read -r line; do
+                eval "$line"
+            done <<< "$case_body"
             ;;
-        not*)
-            val=$(echo "$line" | awk '{print $2}')
-            if [ "$val" -eq 0 ]; then
-                echo "1"
-            else
-                echo "0"
-            fi
+        function\ *)
+            # Function definition
+            local func_name=$(echo "$command" | awk '{print $2}' | tr -d '()')
+            local func_body=""
+            while IFS= read -r func_line; do
+                if [[ "$func_line" == "endfunction" ]]; then
+                    break
+                fi
+                func_body+="$func_line"$'\n'
+            done
+            FUNCTIONS["$func_name"]="$func_body"
             ;;
-        exit*)
-            status=$(echo "$line" | awk '{print $2}')
-            exit $status
+        set\ *)
+            # Variable assignment, including capturing command output
+            local var_name=$(echo "$command" | cut -d' ' -f2)
+            local command_to_run=$(echo "$command" | cut -d' ' -f3-)
+            eval "$var_name=$(eval "$command_to_run")"
             ;;
-        status)
-            echo $?
+        version)
+            echo "Lightswitch Interpreter Version 1.0"
+            ;;
+        curl\ *)
+            # Curl: Fetch content from URL
+            local url="${command#curl }"
+            curl -s "$url"
+            ;;
+        ping\ *)
+            # Ping: Ping a host or IP
+            local host="${command#ping }"
+            ping -c 4 "$host"
+            ;;
+        sleep\ *)
+            # Sleep: Wait for a specified time
+            local time="${command#sleep }"
+            sleep "$time"
+            ;;
+        exec\ *)
+            # Exec: Run a Bash command
+            local bash_command="${command#exec }"
+            bash -c "$bash_command"
+            ;;
+        while\ *)
+            # While loop: e.g., while $condition do ... done
+            local condition=$(echo "$command" | cut -d' ' -f2)
+            local loop_body=""
+            while IFS= read -r line; do
+                if [[ "$line" == "done" ]]; then
+                    break
+                fi
+                loop_body+="$line"$'\n'
+            done
+            while eval "$condition"; do
+                eval "$loop_body"
+            done
+            ;;
+        run\ *)
+            # Single command execution: lightswitch run "command"
+            local cmd="${command#run }"
+            execute_lightswitch "$cmd"
+            ;;
+        help)
+            # Help command: Displays a list of commands
+            echo "Available Lightswitch Commands:"
+            echo "  print <text>         - Print the provided text"
+            echo "  math <equation>      - Perform math operations (e.g., math 5+3=result)"
+            echo "  for <var> in <list>  - Loop over a list (e.g., for i in 1 2 3)"
+            echo "  if <condition> then  - Conditional statement (e.g., if $x -eq 5 then)"
+            echo "  case <var> in ... esac - Case statement"
+            echo "  function <name> () { ... } - Define a function"
+            echo "  set <var> <value>    - Set a variable with a value"
+            echo "  version              - Show the version of Lightswitch"
+            echo "  curl <url>           - Fetch content from a URL using curl"
+            echo "  ping <host>          - Ping a host"
+            echo "  sleep <seconds>      - Pause execution for a specified time"
+            echo "  exec <command>       - Execute a bash command"
+            echo "  while <condition> do ... done - While loop"
+            echo "  run <command>        - Run a single Lightswitch command"
+            echo "  exit                 - Exit interactive mode"
             ;;
         *)
-            echo "Unknown or unsupported command: $line"
+            # Check if it's a function call
+            local func_name=$(echo "$command" | awk '{print $1}')
+            if [[ -n "${FUNCTIONS[$func_name]}" ]]; then
+                # Execute the function
+                local args=$(echo "$command" | cut -d' ' -f2-)
+                local func_body="${FUNCTIONS[$func_name]}"
+                while IFS= read -r func_line; do
+                    eval "$(echo "$func_line" | sed -e "s/\$1/$(echo $args | cut -d' ' -f1)/g" -e "s/\$2/$(echo $args | cut -d' ' -f2)/g")"
+                done <<< "$func_body"
+            else
+                echo "Unknown or unsupported command: $command"
+            fi
             ;;
     esac
 }
 
-# Interactive mode
-interactive_mode() {
-    echo "Welcome to Lightswitch Interactive Mode!"
-    echo "Type 'exit' to quit."
-    
-    while true; do
-        # Display a prompt
-        echo -n "lightswitch> "
-        
-        # Read user input
-        read -r user_input
-        
-        # Exit if the user types 'exit'
-        if [[ "$user_input" == "exit" ]]; then
-            echo "Exiting Lightswitch interactive mode."
-            break
-        fi
-        
-        # Process the entered command
-        execute_command "$user_input"
-    done
-}
-
-# Check if we are in interactive mode
-if [[ "$1" == "--interactive" || -z "$1" ]]; then
+# Main logic
+if [[ "$1" == "--interactive" ]]; then
     interactive_mode
 else
-    # Run as a script
-    for script_file in "$@"; do
-        while IFS= read -r line; do
-            execute_command "$line"
-        done < "$script_file"
-    done
+    if [[ "$1" == "run" ]]; then
+        execute_lightswitch "$2"
+    else
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            execute_lightswitch "$line"
+        done < "$1"
+    fi
 fi
-
