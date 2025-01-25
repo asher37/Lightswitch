@@ -1,76 +1,85 @@
-.TH LIGHTSWITCH 1 "January 2025" "Lightswitch v1.0" "User Commands"
+
+
+
+---
+
+### Updated **lightswitch.1** Man Page
+
+```man
+.TH LIGHTSWITCH 1 "January 2025" "Lightswitch 1.0" "User Commands"
 .SH NAME
-lightswitch \- A simple scripting language
+lightswitch \- Lightswitch scripting interpreter
 .SH SYNOPSIS
 .B lightswitch
-[\fI--interactive\fR] [\fI<script_file>\fR]
+[\fIfile\fR]
+.B lightswitch --interactive
+.B lightswitch run "<command>"
 .SH DESCRIPTION
-Lightswitch is a simple scripting language that supports common operations like string manipulation, mathematical operations, logical operations, and file I/O.
+Lightswitch is a lightweight, interactive scripting language interpreter with support for basic operations, conditionals, loops, functions, and more. It is designed to be easy to use and extendable for various tasks.
+
 .SH COMMANDS
 .TP
-.B concat
-Concatenate two strings.
+.B print <text>
+Print the provided text to the terminal.
+
 .TP
-.B length
-Get the length of a string.
+.B math <equation>
+Perform basic math operations and assign the result to a variable.
+
 .TP
-.B substr
-Extract a substring from a string.
+.B for <var> in <list> do ... endfor
+Iterate over a list of items and execute a block of code for each item.
+
 .TP
-.B readfile
-Read content from a file.
+.B if <condition> then ... endif
+Conditional execution. If the condition evaluates to true, execute the code between `then` and `endif`.
+
 .TP
-.B writefile
-Write content to a file.
+.B case <var> in ... esac
+Case statement for multi-way branching.
+
 .TP
-.B array
-Create an empty array.
+.B function <name> () { ... }
+Define a function.
+
 .TP
-.B arraylen
-Get the length of an array.
+.B set <var> <value>
+Assign a value to a variable.
+
 .TP
-.B arrayget
-Get an element from an array.
+.B version
+Display the current version of Lightswitch.
+
 .TP
-.B arrayset
-Set an element in an array.
+.B curl <url>
+Fetch content from a URL using `curl`.
+
 .TP
-.B sqrt
-Calculate the square root of a number.
+.B ping <host>
+Ping a host or IP address.
+
 .TP
-.B pow
-Raise a number to a power.
+.B sleep <seconds>
+Pause execution for the specified number of seconds.
+
 .TP
-.B random
-Generate a random number between two values.
+.B exec <command>
+Execute a bash command.
+
 .TP
-.B and
-Logical AND operation.
+.B while <condition> do ... done
+Run a block of code while a condition evaluates to true.
+
 .TP
-.B or
-Logical OR operation.
-.TP
-.B not
-Logical NOT operation.
-.TP
-.B exit
-Exit the program with a status code.
-.TP
-.B status
-Show the exit status of the last command.
+.B run <command>
+Execute a single Lightswitch command.
+
 .TP
 .B help
-Show this help message.
-.SH EXAMPLES
-.TP
-.B "concat Hello World"
-Concatenates the strings "Hello" and "World".
-.TP
-.B "math 5 + 3 = result"
-Calculates the sum of 5 and 3, storing the result in "result".
-.TP
-.B "readfile myfile.txt"
-Reads the content of "myfile.txt".
-.SH SEE ALSO
-.BR lightswitch(1)
+Display a list of available commands and usage.
 
+.SH AUTHOR
+Written by [Your Name].
+
+.SH LICENSE
+MIT License. See LICENSE for details.
