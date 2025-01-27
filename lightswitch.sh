@@ -3,7 +3,7 @@
 declare -A FUNCTIONS
 declare -A ALIASES
 declare -A ENV_VARS
-LOG_FILE="lightswitch.log"
+LOG_FILE=".lightswitch.log"
 DEBUG=false
 
 # Function for logging
